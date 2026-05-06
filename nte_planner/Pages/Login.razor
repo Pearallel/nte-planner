@@ -1,0 +1,42 @@
+﻿@page "/login"
+@using Supabase.Gotrue
+@inject Supabase.Client SupabaseClient
+@inject NavigationManager NavManager
+
+<h3>Authentication</h3>
+
+@if (SupabaseClient.Auth.CurrentUser != null)
+{
+    <p>Logged in as: <strong>@SupabaseClient.Auth.CurrentUser.Email</strong></p>
+    <button class="btn btn-danger" @onclick="LogOut">Log Out</button>
+}
+else
+{
+    <button class="btn btn-primary" @onclick="SignInWithGoogle">Sign in with Google</button>
+}
+
+@code {
+    private async Task SignInWithGoogle()
+    {
+        // 1. Set where the user should land after logging in
+        var options = new SignInOptions
+        {
+            RedirectTo = NavManager.BaseUri // Points back to https://localhost:7222/
+        };
+
+        // 2. Request the OAuth URL from Supabase
+        var response = await SupabaseClient.Auth.SignIn(Constants.Provider.Google, options);
+
+        // 3. Redirect the browser to the Google login screen
+        if (response?.Uri != null)
+        {
+            NavManager.NavigateTo(response.Uri.ToString(), forceLoad: true);
+        }
+    }
+
+    private async Task LogOut()
+    {
+        await SupabaseClient.Auth.SignOut();
+        StateHasChanged();
+    }
+}

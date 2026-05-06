@@ -1,0 +1,144 @@
+﻿@page "/sync-demo"
+@using nte_planner.Models
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
+@using Microsoft.Data.Sqlite
+@inject IDbContextFactory<LocalDbContext> DbFactory
+@inject Supabase.Client SupabaseClient
+@inject IJSRuntime JS
+
+<h3>Offline-First Sync Demo</h3>
+
+<div class="mb-3 d-flex gap-2">
+    <button class="btn btn-primary" @onclick="AddNewLocalTask">Add Local Task</button>
+    <button class="btn btn-success" @onclick="RunSync" disabled="@isSyncing">
+        @(isSyncing ? "Syncing..." : "Sync with Supabase")
+    </button>
+</div>
+
+<hr />
+
+<h4>Local SQLite Database State:</h4>
+<ul>
+    @foreach (var task in localTasks)
+    {
+        <li>
+            @task.TaskName
+            @if (task.IsSynced)
+            {
+                <span class="badge bg-success">Synced</span>
+            }
+            else
+            {
+
+                <span class="badge bg-warning text-dark">Pending Push</span>
+            }
+        </li>
+    }
+</ul>
+
+@code {
+    private List<Todo> localTasks = new();
+    private bool isSyncing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLocalData();
+    }
+
+    private async Task LoadLocalData()
+    {
+        using var db = DbFactory.CreateDbContext();
+        localTasks = await db.Todos.ToListAsync();
+    }
+
+    // --- DATABASE BACKUP TO INDEXEDDB ---
+    private async Task BackupDatabaseAsync()
+    {
+        // 1. Force SQLite to release its lock on the database file
+        SqliteConnection.ClearAllPools();
+        
+        // 2. Read the binary data from the Blazor virtual file system
+        var bytes = File.ReadAllBytes("localdb.db");
+        
+        // 3. Send the bytes to the JavaScript helper to save in IndexedDB
+        await JS.InvokeVoidAsync("sqliteStorage.save", "localdb.db", bytes);
+    }
+
+    // --- ADD LOCAL TASK ---
+    private async Task AddNewLocalTask()
+    {
+        using var db = DbFactory.CreateDbContext();
+        var newTask = new Todo
+        {
+            TaskName = $"Local Task {DateTime.Now.Second}",
+            IsComplete = false,
+            UpdatedAt = DateTime.Now,
+            IsSynced = false
+        };
+        
+        db.Todos.Add(newTask);
+        await db.SaveChangesAsync();
+        await LoadLocalData();
+
+        // Persist the updated database to the browser's hard drive
+        await BackupDatabaseAsync();
+    }
+
+    // --- TWO-WAY SYNC ---
+    private async Task RunSync()
+    {
+        isSyncing = true;
+        StateHasChanged();
+
+        using var db = DbFactory.CreateDbContext();
+        
+        // 1. PUSH LOCAL CHANGES TO SUPABASE
+        var unsyncedItems = await db.Todos.Where(t => !t.IsSynced).ToListAsync();
+        if (unsyncedItems.Any())
+        {
+            var response = await SupabaseClient.From<Todo>().Upsert(unsyncedItems);
+            if (response.Models.Count > 0)
+            {
+                foreach (var item in unsyncedItems)
+                {
+                    item.IsSynced = true;
+                }
+                await db.SaveChangesAsync();
+            }
+        }
+
+        // 2. PULL REMOTE CHANGES TO LOCAL SQLITE
+        var remoteData = await SupabaseClient.From<Todo>().Get();
+        var remoteItems = remoteData.Models;
+
+        foreach (var remoteItem in remoteItems)
+        {
+            var localItem = await db.Todos.FindAsync(remoteItem.Id);
+            
+            if (localItem == null)
+            {
+                // Task came from the cloud
+                remoteItem.IsSynced = true;
+                db.Todos.Add(remoteItem);
+            }
+            else if (remoteItem.UpdatedAt > localItem.UpdatedAt)
+            {
+                // Task was updated in the cloud
+                localItem.TaskName = remoteItem.TaskName;
+                localItem.IsComplete = remoteItem.IsComplete;
+                localItem.UpdatedAt = remoteItem.UpdatedAt;
+                localItem.IsSynced = true;
+            }
+        }
+        
+        await db.SaveChangesAsync();
+
+        // 3. REFRESH UI & BACKUP
+        await LoadLocalData();
+        await BackupDatabaseAsync();
+
+        isSyncing = false;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,33 @@
+﻿@page "/todos"
+@using nte_planner.Models
+@inject Supabase.Client SupabaseClient
+
+<h3>Todo List</h3>
+
+@if (todos == null)
+{
+    <p><em>Loading data from Supabase...</em></p>
+}
+else
+{
+    <ul>
+        @foreach (var todo in todos)
+        {
+            <li>
+                <input type="checkbox" checked="@todo.IsComplete" disabled />
+                @todo.TaskName
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private List<Todo>? todos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch all records from the 'todos' table
+        var response = await SupabaseClient.From<Todo>().Get();
+        todos = response.Models;
+    }
+}
