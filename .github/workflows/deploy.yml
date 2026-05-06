@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ["main"] # Or 'master', depending on your default branch
+  workflow_dispatch:   # Allows you to run this workflow manually from the Actions tab
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.0' # Change this if you are using .NET 6, 7, or 9
+
+      - name: Publish Blazor app
+        # UPDATE THIS LINE with your actual .csproj path
+        run: dotnet publish nte_planner.Client/nte_planner.Client.csproj -c Release -o release
+
+      - name: Fix GitHub Pages Quirks
+        # UPDATE 'nte_planner' below to your exact GitHub repository name (case-sensitive)
+        run: |
+          # 1. Change the base path so assets load correctly
+          sed -i 's/<base href="\/" \/>/<base href="\/nte_planner\/" \/>/g' release/wwwroot/index.html
+          
+          # 2. Fix SPA routing by copying index.html to 404.html
+          cp release/wwwroot/index.html release/wwwroot/404.html
+          
+          # 3. Bypass Jekyll so it doesn't ignore folders starting with an underscore (like _framework)
+          touch release/wwwroot/.nojekyll
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'release/wwwroot'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

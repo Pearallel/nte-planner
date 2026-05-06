@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="nte_planner.Client/nte_planner.Client.csproj" />
+  <Project Path="nte_planner/nte_planner.csproj" />
+</Solution>
