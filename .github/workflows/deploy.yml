@@ -29,7 +29,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.0' # Change this if you are using .NET 6, 7, or 9
+          dotnet-version: '10.0.x' # Change this if you are using .NET 6, 7, or 9
 
       - name: Publish Blazor app
         # UPDATE THIS LINE with your actual .csproj path
@@ -39,7 +39,7 @@ jobs:
         # UPDATE 'nte_planner' below to your exact GitHub repository name (case-sensitive)
         run: |
           # 1. Change the base path so assets load correctly
-          sed -i 's/<base href="\/" \/>/<base href="\/nte_planner\/" \/>/g' release/wwwroot/index.html
+          sed -i 's/<base href="\/" \/>/<base href="\/nte-planner\/" \/>/g' release/wwwroot/index.html
           
           # 2. Fix SPA routing by copying index.html to 404.html
           cp release/wwwroot/index.html release/wwwroot/404.html
