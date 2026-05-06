@@ -31,6 +31,9 @@ jobs:
         with:
           dotnet-version: '10.0.x' # Change this if you are using .NET 6, 7, or 9
 
+      - name: Restore Workloads
+        run: dotnet workload restore nte_planner/nte_planner.csproj
+      
       - name: Publish Blazor app
         # UPDATE THIS LINE with your actual .csproj path
         run: dotnet publish nte_planner/nte_planner.csproj -c Release -o release
