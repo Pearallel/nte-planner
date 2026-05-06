@@ -33,7 +33,7 @@ jobs:
 
       - name: Publish Blazor app
         # UPDATE THIS LINE with your actual .csproj path
-        run: dotnet publish nte_planner.Client/nte_planner.Client.csproj -c Release -o release
+        run: dotnet publish nte_planner/nte_planner.csproj -c Release -o release
 
       - name: Fix GitHub Pages Quirks
         # UPDATE 'nte_planner' below to your exact GitHub repository name (case-sensitive)
