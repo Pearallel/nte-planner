@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
-using nte_planner;
+using nte_planner.Components;
 using nte_planner.Models;
 using Supabase;
 
