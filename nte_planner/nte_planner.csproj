@@ -30,9 +30,7 @@
 			<GeneratedCss Include="Styles\**\*.css.map" />
 		</ItemGroup>
 
-		<Copy SourceFiles="@(GeneratedCss)"
-			  DestinationFolder="wwwroot\styles\%(RecursiveDir)"
-			  SkipUnchangedFiles="true" />
+		<Copy SourceFiles="@(GeneratedCss)" DestinationFolder="wwwroot\styles\%(RecursiveDir)" SkipUnchangedFiles="true" />
 
 		<Delete Files="@(GeneratedCss)" />
 	</Target>

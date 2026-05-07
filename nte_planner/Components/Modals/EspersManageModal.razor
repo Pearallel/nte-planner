@@ -1,0 +1,66 @@
+﻿@inject IJSRuntime JS
+
+<div class="modal fade" id="espers-manage-modal" tabindex="-1" aria-labelledby="espers-manage-modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <div>
+                        <p>Filter</p>
+                    </div>
+                    <div class="d-flex flex-wrap bg-secondary rounded mb-5">
+                        <div class="p-2">
+                            <img alt="S" src="img/rarity/rating-S.webp" class="nte-ico-filter" />
+                            <img alt="A" src="img/rarity/rating-A.webp" class="nte-ico-filter" />
+                        </div>
+                        <div class="p-2">
+                            <img alt="Cosmos" src="img/elements/element-cosmos.png" class="nte-ico-filter" />
+                            <img alt="Anima" src="img/elements/element-anima.png" class="nte-ico-filter" />
+                            <img alt="Incantation" src="img/elements/element-incantation.png" class="nte-ico-filter" />
+                            <img alt="Chaos" src="img/elements/element-chaos.png" class="nte-ico-filter" />
+                            <img alt="Psyche" src="img/elements/element-psyche.png" class="nte-ico-filter" />
+                            <img alt="Lakshana" src="img/elements/element-lakshana.png" class="nte-ico-filter" />
+                        </div>
+                        <div class="d-flex flex-wrap">
+                            <div class="p-2">
+                                <img alt="Solid" src="img/arc-compatibility/arc-comp-solid.png" class="nte-ico-filter" />
+                                <img alt="Liquid" src="img/arc-compatibility/arc-comp-liquid.png" class="nte-ico-filter" />
+                                <img alt="Gas" src="img/arc-compatibility/arc-comp-gas.png" class="nte-ico-filter" />
+                                <img alt="Plasma" src="img/arc-compatibility/arc-comp-plasma.png" class="nte-ico-filter" />
+                                <img alt="Synthesis" src="img/arc-compatibility/arc-comp-synthesis.png" class="nte-ico-filter" />
+                            </div>
+                            <div class="p-2">
+                                <img alt="Damage" />
+                                <img alt="Survival" />
+                                <img alt="Buff" />
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close"></button>
+                </div>
+                </div>
+            <div class="modal-body">
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// Opens the modal and loads default data if provided.
+    /// </summary>
+    public async Task OpenModal()
+    {
+        // Open the boostrap modal
+        await JS.InvokeVoidAsync("bootstrapInterop.showModal", "#espers-manage-modal");
+    }
+
+    /// <summary>
+    /// Closes the modal.
+    /// </summary>
+    public async Task CloseModal()
+    {
+        await JS.InvokeVoidAsync("bootstrapInterop.hideModal", "#espers-manage-modal");
+    }
+}
