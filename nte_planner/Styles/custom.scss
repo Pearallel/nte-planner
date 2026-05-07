@@ -1,0 +1,25 @@
+
+// Color Pallet:
+// Dark Blue: 364F6B
+// Teal: 3FC1C9
+// White: F5F5F5
+// Pink: FC5185
+
+// 1. Core Theme Colors (These stay the same for both modes)
+$primary: #3FC1C9; // Teal
+$secondary: #2C2C2C; // Dark Blue
+$danger: #FFC1CC; // Pink
+$light: #B39CD0; // Off-White
+$dark: #1B2B1C; // A slightly darker shade of your Dark Blue for contrast elements
+
+// 2. Default Light Mode Settings
+$body-bg: #E4E4E4; // Off-White background
+$body-color: #2C2C2C; // Dark Blue text
+
+// 3. Dark Mode Specific Overrides
+// This tells Bootstrap what to swap to when data-bs-theme="dark" is active
+$body-bg-dark: #1B1B1C; // Dark Blue background
+$body-color-dark: #E4E4E4; // Off-White text
+
+// 4. Import Bootstrap
+@import "./scss/bootstrap";
