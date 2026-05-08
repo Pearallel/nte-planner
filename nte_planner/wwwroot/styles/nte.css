@@ -10,11 +10,27 @@
 .nte-ico-xsm {
     max-width: 30px
 }
-.nte-esper-card-page {
+.nte-ico-xxsm {
+    max-width: 20px
+}
+
+.nte-esper-card-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 150px;
     gap: 0.5rem;
+}
+.nte-esper-card-sm {
+    width: 120px;
+}
+.nte-esper-card-md {
+    width: 150px;
+}
+.nte-bg-s-rank {
+    background-color: #f9b44c
+}
+.nte-bg-a-rank {
+    background-color: #eb00eb
 }

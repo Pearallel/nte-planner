@@ -1,5 +1,7 @@
 ﻿@page "/"
+@using nte_planner.Components.Forms
 @using nte_planner.Components.Modals
+@using nte_planner.Components.Views
 
 <h3>Espers</h3>
 <p>Temporarily using images by https://zeroluck.gg/nte/ and https://game8.co/games/Neverness-to-Everness for development!</p>
@@ -9,44 +11,10 @@
 <div>
     <p>Filter</p>
 </div>
-<div class="d-flex flex-wrap bg-secondary rounded mb-5">
-    <div class="p-2">
-        <img alt="S" src="img/rarity/rating-S.webp" class="nte-ico-filter" />
-        <img alt="A" src="img/rarity/rating-A.webp" class="nte-ico-filter"/>
-    </div>
-    <div class="p-2">
-        <img alt="Cosmos" src="img/elements/element-cosmos.png" class="nte-ico-filter" />
-        <img alt="Anima" src="img/elements/element-anima.png" class="nte-ico-filter" />
-        <img alt="Incantation" src="img/elements/element-incantation.png" class="nte-ico-filter" />
-        <img alt="Chaos" src="img/elements/element-chaos.png" class="nte-ico-filter" />
-        <img alt="Psyche" src="img/elements/element-psyche.png" class="nte-ico-filter" />
-        <img alt="Lakshana" src="img/elements/element-lakshana.png" class="nte-ico-filter" />
-    </div>
-    <div class="d-flex flex-wrap">
-        <div class="p-2">
-            <img alt="Solid" src="img/arc-compatibility/arc-comp-solid.png" class="nte-ico-filter" />
-            <img alt="Liquid" src="img/arc-compatibility/arc-comp-liquid.png" class="nte-ico-filter" />
-            <img alt="Gas" src="img/arc-compatibility/arc-comp-gas.png" class="nte-ico-filter" />
-            <img alt="Plasma" src="img/arc-compatibility/arc-comp-plasma.png" class="nte-ico-filter" />
-            <img alt="Synthesis" src="img/arc-compatibility/arc-comp-synthesis.png" class="nte-ico-filter" />
-        </div>
-        <div class="p-2">
-            <img alt="Damage" />
-            <img alt="Survival" />
-            <img alt="Buff" />
-        </div>
-    </div>
-</div>
-<div class="bg-secondary nte-esper-card-page p-2 rounded user-select-none" @onclick="() => espersManageModal.OpenModal()">
-    <div class="position-relative bg-danger pb-4 rounded" style="width:100%">
-        <div class="bg-black rounded-bottom overflow-hidden p-1">
-            <img alt="Mint" src="img/espers/esper-mint.png" style="width:100%" class="rounded">
-        </div>
-        <div class="d-flex flex-row-reverse position-absolute bottom-0 end-0">
-            <img alt="Liquid" src="img/arc-compatibility/arc-comp-liquid.png" class="nte-ico-xsm" />
-            <img alt="Anima" src="img/elements/element-anima.png" class="nte-ico-xsm" />
-        </div>
-    </div>
+<EsperFilterSelectForm />
+
+<div class="bg-secondary nte-esper-card-container p-2 rounded user-select-none" @onclick="() => espersManageModal.OpenModal()">
+    <EsperCardView />
     <div>Mint</div>
     <div>
         <img alt="Level" src="img/level.webp" class="nte-ico-sm" />
