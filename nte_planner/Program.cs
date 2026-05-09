@@ -3,54 +3,59 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
 using nte_planner.Components;
-using nte_planner.Models;
+using nte_planner.Data;
 using Supabase;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-SQLitePCL.Batteries_V2.Init();
+// 1. Register Local SQLite (EF Core)
+// In Blazor WASM, SQLite runs in the browser via WebAssembly. 
+// We create the file locally in the browser's virtual file system.
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseSqlite("Data Source=nteplanner_local.db"));
 
-builder.Services.AddDbContextFactory<LocalDbContext>(options =>
-    options.UseSqlite("Data Source=localdb.db"));
+// 2. Register Remote Supabase Client
+// Replace with your actual Supabase URL and Anon Key (usually stored in appsettings.json or environment variables)
+var supabaseUrl = builder.Configuration["Supabase:Url"] ?? "https://your-project.supabase.co";
+var supabaseKey = builder.Configuration["Supabase:Key"] ?? "your-anon-key";
 
-// 1. Retrieve keys from appsettings.json
-var supabaseUrl = builder.Configuration["Supabase:Url"];
-var supabaseKey = builder.Configuration["Supabase:Key"];
-
-// 2. Register Supabase Client
-builder.Services.AddScoped(provider =>
-{
-    var options = new SupabaseOptions
+builder.Services.AddScoped(sp => new Supabase.Client(
+    supabaseUrl,
+    supabaseKey,
+    new SupabaseOptions
     {
-        AutoConnectRealtime = false
-    };
+        AutoRefreshToken = true,
+        AutoConnectRealtime = true
+    }));
 
-    return new Supabase.Client(supabaseUrl, supabaseKey, options);
-});
+var host = builder.Build();
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-
-var app = builder.Build();
-
-var js = app.Services.GetRequiredService<IJSRuntime>();
-
-// 1. Ask JS to pull the database from persistent storage
-var dbBytes = await js.InvokeAsync<byte[]>("sqliteStorage.load", "localdb.db");
-if (dbBytes != null)
+// 1. Pull the saved SQLite file from IndexedDB BEFORE EF Core tries to use it
+var jsRuntime = host.Services.GetRequiredService<IJSRuntime>();
+try
 {
-    // 2. If it exists, write it into Blazor's virtual file system
-    File.WriteAllBytes("localdb.db", dbBytes);
+    var dbBytes = await jsRuntime.InvokeAsync<byte[]>("indexedDbInterop.load", "nteplanner_local.db");
+    if (dbBytes != null)
+    {
+        // Place the database file back into Blazor's active memory
+        File.WriteAllBytes("nteplanner_local.db", dbBytes);
+    }
+}
+catch
+{
+    // Ignore the error if it's the very first time running and the DB doesn't exist yet
 }
 
-var dbFactory = app.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
-using var db = await dbFactory.CreateDbContextAsync();
+// 2. Now it is safe for EF Core to connect to the database
+using (var scope = host.Services.CreateScope())
+{
+    var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    using var dbContext = dbFactory.CreateDbContext();
 
-await db.Database.EnsureCreatedAsync();
+    // Creates the schema if the file was totally empty
+    await dbContext.Database.EnsureCreatedAsync();
+}
 
-// 3. Initialize the Supabase Client
-var supabaseClient = app.Services.GetRequiredService<Supabase.Client>();
-await supabaseClient.InitializeAsync();
-
-await app.RunAsync();
+await host.RunAsync();

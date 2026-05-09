@@ -1,144 +1,212 @@
-﻿@page "/sync-demo"
-@using nte_planner.Models
+﻿@page "/"
+
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.JSInterop
-@using Microsoft.Data.Sqlite
-@inject IDbContextFactory<LocalDbContext> DbFactory
-@inject Supabase.Client SupabaseClient
-@inject IJSRuntime JS
+@using nte_planner.Data
+@using nte_planner.Models
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject Supabase.Client Supabase
 
-<h3>Offline-First Sync Demo</h3>
+<h3>Rarity Management (Local-First + Supabase Sync)</h3>
 
-<div class="mb-3 d-flex gap-2">
-    <button class="btn btn-primary" @onclick="AddNewLocalTask">Add Local Task</button>
-    <button class="btn btn-success" @onclick="RunSync" disabled="@isSyncing">
-        @(isSyncing ? "Syncing..." : "Sync with Supabase")
-    </button>
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="SyncFromCloud">↓ Pull from Supabase</button>
+    <button class="btn btn-warning" @onclick="SyncToCloud">↑ Push Local to Supabase</button>
 </div>
 
-<hr />
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            @(isEditing ? "Edit Rarity" : "Add New Rarity")
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-5">
+                    <input class="form-control" @bind="currentRarity.Name" placeholder="Rarity Name (e.g. Legendary)" />
+                </div>
+                <div class="col-md-5">
+                    <input class="form-control" @bind="currentRarity.ImageLink" placeholder="Image URL" />
+                </div>
+                <div class="col-md-2">
+                    @if (isEditing)
+                    {
+                        <button class="btn btn-success w-100" @onclick="UpdateLocal">Save Changes</button>
+                        <button class="btn btn-secondary w-100 mt-1" @onclick="CancelEdit">Cancel</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-success w-100" @onclick="CreateLocal">Add</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 
-<h4>Local SQLite Database State:</h4>
-<ul>
-    @foreach (var task in localTasks)
-    {
-        <li>
-            @task.TaskName
-            @if (task.IsSynced)
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Image URL</th>
+                <th>Last Updated</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var rarity in localRarities)
             {
-                <span class="badge bg-success">Synced</span>
+                <tr>
+                    <td>@rarity.Id</td>
+                    <td>@rarity.Name</td>
+                    <td>@rarity.ImageLink</td>
+                    <td>@rarity.LastUpdatedAt?.ToString("g")</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" @onclick="() => EditLocal(rarity)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteLocal(rarity)">Delete</button>
+                    </td>
+                </tr>
             }
-            else
-            {
-
-                <span class="badge bg-warning text-dark">Pending Push</span>
-            }
-        </li>
-    }
-</ul>
+        </tbody>
+    </table>
+}
 
 @code {
-    private List<Todo> localTasks = new();
-    private bool isSyncing = false;
+    private List<Rarity> localRarities = new();
+    private Rarity currentRarity = new();
+    private bool isLoading = true;
+    private bool isEditing = false;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadLocalData();
     }
 
+    // ==========================================
+    // 1. LOCAL SQLITE CRUD (Instant UI Updates)
+    // ==========================================
+    
     private async Task LoadLocalData()
     {
-        using var db = DbFactory.CreateDbContext();
-        localTasks = await db.Todos.ToListAsync();
+        isLoading = true;
+        using var db = await DbFactory.CreateDbContextAsync();
+        localRarities = await db.Rarities.ToListAsync();
+        isLoading = false;
     }
 
-    // --- DATABASE BACKUP TO INDEXEDDB ---
-    private async Task BackupDatabaseAsync()
+    private async Task CreateLocal()
     {
-        // 1. Force SQLite to release its lock on the database file
-        SqliteConnection.ClearAllPools();
+        if (string.IsNullOrWhiteSpace(currentRarity.Name)) return;
+
+        using var db = await DbFactory.CreateDbContextAsync();
         
-        // 2. Read the binary data from the Blazor virtual file system
-        var bytes = File.ReadAllBytes("localdb.db");
-        
-        // 3. Send the bytes to the JavaScript helper to save in IndexedDB
-        await JS.InvokeVoidAsync("sqliteStorage.save", "localdb.db", bytes);
+        currentRarity.LastUpdatedAt = DateTime.UtcNow;
+        db.Rarities.Add(currentRarity);
+        await db.SaveChangesAsync();
+
+        currentRarity = new Rarity(); // reset form
+        await LoadLocalData();
     }
 
-    // --- ADD LOCAL TASK ---
-    private async Task AddNewLocalTask()
+    private void EditLocal(Rarity rarity)
     {
-        using var db = DbFactory.CreateDbContext();
-        var newTask = new Todo
+        // Copy values so we don't accidentally edit the grid directly before saving
+        currentRarity = new Rarity
         {
-            TaskName = $"Local Task {DateTime.Now.Second}",
-            IsComplete = false,
-            UpdatedAt = DateTime.Now,
-            IsSynced = false
+            Id = rarity.Id,
+            Name = rarity.Name,
+            ImageLink = rarity.ImageLink
         };
-        
-        db.Todos.Add(newTask);
-        await db.SaveChangesAsync();
-        await LoadLocalData();
-
-        // Persist the updated database to the browser's hard drive
-        await BackupDatabaseAsync();
+        isEditing = true;
     }
 
-    // --- TWO-WAY SYNC ---
-    private async Task RunSync()
+    private async Task UpdateLocal()
     {
-        isSyncing = true;
-        StateHasChanged();
-
-        using var db = DbFactory.CreateDbContext();
-        
-        // 1. PUSH LOCAL CHANGES TO SUPABASE
-        var unsyncedItems = await db.Todos.Where(t => !t.IsSynced).ToListAsync();
-        if (unsyncedItems.Any())
+        using var db = await DbFactory.CreateDbContextAsync();
+        var existing = await db.Rarities.FindAsync(currentRarity.Id);
+        if (existing != null)
         {
-            var response = await SupabaseClient.From<Todo>().Upsert(unsyncedItems);
-            if (response.Models.Count > 0)
-            {
-                foreach (var item in unsyncedItems)
-                {
-                    item.IsSynced = true;
-                }
-                await db.SaveChangesAsync();
-            }
+            existing.Name = currentRarity.Name;
+            existing.ImageLink = currentRarity.ImageLink;
+            existing.LastUpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
         }
 
-        // 2. PULL REMOTE CHANGES TO LOCAL SQLITE
-        var remoteData = await SupabaseClient.From<Todo>().Get();
-        var remoteItems = remoteData.Models;
-
-        foreach (var remoteItem in remoteItems)
-        {
-            var localItem = await db.Todos.FindAsync(remoteItem.Id);
-            
-            if (localItem == null)
-            {
-                // Task came from the cloud
-                remoteItem.IsSynced = true;
-                db.Todos.Add(remoteItem);
-            }
-            else if (remoteItem.UpdatedAt > localItem.UpdatedAt)
-            {
-                // Task was updated in the cloud
-                localItem.TaskName = remoteItem.TaskName;
-                localItem.IsComplete = remoteItem.IsComplete;
-                localItem.UpdatedAt = remoteItem.UpdatedAt;
-                localItem.IsSynced = true;
-            }
-        }
-        
-        await db.SaveChangesAsync();
-
-        // 3. REFRESH UI & BACKUP
+        CancelEdit();
         await LoadLocalData();
-        await BackupDatabaseAsync();
+    }
 
-        isSyncing = false;
+    private void CancelEdit()
+    {
+        currentRarity = new Rarity();
+        isEditing = false;
+    }
+
+    private async Task DeleteLocal(Rarity rarity)
+    {
+        using var db = await DbFactory.CreateDbContextAsync();
+        db.Rarities.Remove(rarity);
+        await db.SaveChangesAsync();
+        
+        await LoadLocalData();
+    }
+
+    // ==========================================
+    // 2. SUPABASE SYNC LOGIC
+    // ==========================================
+
+    private async Task SyncFromCloud()
+    {
+        isLoading = true;
         StateHasChanged();
+
+        try
+        {
+            // 1. Fetch from Supabase
+            var response = await Supabase.From<Rarity>().Get();
+            var cloudRarities = response.Models;
+
+            // 2. Overwrite Local SQLite with Cloud Data
+            using var db = await DbFactory.CreateDbContextAsync();
+            
+            // For a basic demo, we clear and replace.
+            // In a production app, you would do a smart merge based on 'LastUpdatedAt'
+            var localData = await db.Rarities.ToListAsync();
+            db.Rarities.RemoveRange(localData);
+            await db.SaveChangesAsync();
+
+            db.Rarities.AddRange(cloudRarities);
+            await db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Sync pull failed: {ex.Message}");
+        }
+
+        await LoadLocalData();
+    }
+
+    private async Task SyncToCloud()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            using var db = await DbFactory.CreateDbContextAsync();
+            var locals = await db.Rarities.ToListAsync();
+
+            // Supabase allows bulk Upserting. It will match on the Primary Key (Id).
+            await Supabase.From<Rarity>().Upsert(locals);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Sync push failed: {ex.Message}");
+        }
+
+        await LoadLocalData();
     }
 }
