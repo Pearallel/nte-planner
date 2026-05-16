@@ -16,6 +16,9 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite("Data Source=nteplanner_local.db"));
 
+builder.Services.AddScoped<nte_planner.Services.EsperDataService>();
+builder.Services.AddScoped<nte_planner.Services.DataSyncService>();
+
 // 2. Register Remote Supabase Client
 // Replace with your actual Supabase URL and Anon Key (usually stored in appsettings.json or environment variables)
 var supabaseUrl = builder.Configuration["Supabase:Url"] ?? "https://your-project.supabase.co";

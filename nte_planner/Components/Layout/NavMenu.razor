@@ -1,4 +1,6 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject Services.DataSyncService SyncService
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">nte_planner</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -25,6 +27,23 @@
             </NavLink>
         </div>
     </nav>
+
+    <button class="btn btn-primary" @onclick="HandleSync" disabled="@isSyncing">
+        @if (isSyncing)
+        {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span> Syncing...</span>
+        }
+        else
+        {
+            <span>↻ Sync Now</span>
+        }
+    </button>
+
+    @if (!string.IsNullOrEmpty(syncMessage))
+    {
+        <span class="sync-message @messageClass">@syncMessage</span>
+    }
 </div>
 
 @code {
@@ -35,5 +54,53 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+}
+
+
+@code {
+    private bool isSyncing = false;
+    private string syncMessage = "";
+    private string messageClass = "";
+
+    private async Task HandleSync()
+    {
+        // 1. Update UI to show loading state and prevent double-clicks
+        isSyncing = true;
+        syncMessage = "Syncing data...";
+        messageClass = "text-info";
+        
+        // This forces Blazor to re-render the button to show the spinner
+        // before the heavy sync work begins.
+        StateHasChanged();
+
+        try
+        {
+            // 2. Call the master sync method we built earlier
+            await SyncService.RunFullSyncAsync();
+
+            // 3. Update UI on success
+            syncMessage = "Sync complete!";
+            messageClass = "text-success";
+        }
+        catch (Exception ex)
+        {
+            // 4. Update UI on failure (e.g., user is offline)
+            syncMessage = "Sync failed. You might be offline.";
+            messageClass = "text-danger";
+            Console.WriteLine($"Sync Error: {ex.Message}");
+        }
+        finally
+        {
+            // 5. Always reset the button state
+            isSyncing = false;
+            
+            // Clear the message after 3 seconds so it doesn't stay on screen forever
+            _ = Task.Delay(3000).ContinueWith(_ =>
+            {
+                syncMessage = "";
+                InvokeAsync(StateHasChanged);
+            });
+        }
     }
 }

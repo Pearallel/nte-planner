@@ -1,11 +1,19 @@
-﻿<div class="nte-bg-a-rank rounded" style="width:100%">
-    <div class="position-relative bg-black rounded-bottom overflow-hidden p-1">
-        <img alt="Mint" src="img/espers/esper-adler.webp" style="width:100%" class="rounded">
-        <img alt="A-Rank" src="img/rarity/rating-A.webp" class="nte-ico-xsm position-absolute bottom-0 end-0" />
+﻿@using nte_planner.Models
+<div class="rounded" style="width:100%">
+    <div class="position-relative">
+        <img alt="@Esper?.Esper?.Name" src="@Esper?.Esper?.ImageLink" class="nte-esper-card-img">
+        <div class="position-absolute bottom-0 end-0 p-1 d-flex gap-1">
+            <img alt="Anima" src="@Esper?.Esper?.Element?.ImageLink" class="nte-ico-xsm" />
+            <img alt="Liquid" src="@Esper?.Esper?.ArcCompatability?.ImageLink" class="nte-ico-xsm" />
+            <img alt="Damage" src="@Esper?.Esper?.CombatRole?.ImageLink" class="nte-ico-xsm" />
+        </div>
     </div>
-    <div class="d-flex justify-content-center">
-        <img alt="Anima" src="img/elements/element-anima.png" class="nte-ico-xsm" />
-        <img alt="Liquid" src="img/arc-compatibility/arc-comp-liquid.png" class="nte-ico-xsm" />
-        <img alt="Damage" src="img/combat-role/combatrole-damage.png" class="nte-ico-xsm" />
-    </div>
+    <div class="nte-esper-card-rarity-stripe @(Esper?.Esper?.Rarity?.Name == "A" ? "nte-esper-card-rarity-a" : "nte-esper-card-rarity-s") "></div>
 </div>
+
+@Esper?.Esper?.Rarity?.Name
+
+@code {
+    [Parameter]
+    public OwnedEsper? Esper { get; set; }
+}

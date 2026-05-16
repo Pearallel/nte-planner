@@ -1,338 +1,250 @@
-﻿@using nte_planner.Components.Forms
-@using nte_planner.Components.Views
+﻿@using nte_planner.Components.Views
 @inject IJSRuntime JS
 
-<div class="modal fade" id="espers-manage-modal" tabindex="-1" aria-labelledby="espers-manage-modal" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close"></button>
+<div class="modal fade" id="espers-manage-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content nte-modal-content shadow-lg rounded-3">
+            
+            <div class="nte-modal-header p-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-sm btn-dark">New</button>
+                    <div class="nte-esper-card-sm">
+                        <EsperIconView />
+                    </div>
+                    <h5 class="mb-0 fw-bold text-uppercase">Adler</h5>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close"></button>
+                </div>
             </div>
-            <div class="modal-body text-center">
-                <div>Filter</div>
-                <EsperFilterSelectForm />
-                <div class="container d-flex flex-wrap gap-2">
-                    <div style="width:120px">
-                        <EsperCardView />
-                    </div>
-                    <div style="width:120px">
-                        <EsperCardView />
-                    </div>
-                    <div style="width:120px">
-                        <EsperCardView />
-                    </div>
-                    <div style="width:120px">
-                        <EsperCardView />
-                    </div>
-                    <div style="width:120px">
-                        <EsperCardView />
-                    </div>
-                    <div style="width:120px">
-                        <EsperCardView />
-                    </div>
-                </div>
-                <div class="mb-5"></div>
 
-                <div style="width:80px">
-                    <EsperIconView />
-                </div>
-                <div class="d-flex">
-                    <button type="button" class="btn btn-subtle-secondary flex-fill">Level</button>
-                    <button type="button" class="btn btn-subtle-secondary flex-fill">Arc</button>
-                    <button type="button" class="btn btn-subtle-secondary flex-fill">Console</button>
-                    <button type="button" class="btn btn-subtle-secondary flex-fill">Esper Ability</button>
-                </div>
-                <div class="bg-secondary text-primary rounded">Level</div>
-                <div class="d-flex justify-content-center">
-                    <div>
-                        <div>Current Level</div>
-                        <div>Level Incrementer</div>
-                        <div>Star Incrementer</div>
+            <div class="modal-body">
+                <input type="checkbox" class="form-check-inline" id="nte-esper-modal-active" checked />
+                <label for="nte-esper-modal-active" class="form-label form-check-label">Actively Upgrading Esper</label>
+
+
+                <ul class="nav nav-tabs nav-tabs-custom w-100 d-flex mb-4">
+                    <li class="nav-item flex-fill text-center">
+                        <a class="nav-link @(activeTab == "LEVEL" ? "active" : "")" @onclick="@(() => SetTab("LEVEL"))">
+                            Level
+                        </a>
+                    </li>
+                    <li class="nav-item flex-fill text-center">
+                        <a class="nav-link @(activeTab == "ARC" ? "active" : "")" @onclick="@(() => SetTab("ARC"))">
+                            Arc
+                        </a>
+                    </li>
+                    <li class="nav-item flex-fill text-center">
+                        <a class="nav-link @(activeTab == "CONSOLE" ? "active" : "")" @onclick="@(() => SetTab("CONSOLE"))">
+                            Console
+                        </a>
+                    </li>
+                    <li class="nav-item flex-fill text-center">
+                        <a class="nav-link @(activeTab == "ESPER-ABILITIES" ? "active" : "")" @onclick="@(() => SetTab("ESPER-ABILITIES"))">
+                            Esper Abilities
+                        </a>
+                    </li>
+                </ul>
+
+                @if (activeTab == "LEVEL")
+                {
+                    <div class="bg-dark p-2 text-center rounded mb-4">
+                        <h4 class="fw-bold text-uppercase">
+                            Level
+                        </h4>
                     </div>
-                    <div>
-                        >>
-                    </div>
-                    <div>
-                        <div>Current Level</div>
-                        <div>Level Incrementer</div>
-                        <div>Star Incrementer</div>
-                    </div>
-                </div>
-                <div class="w-100 text-center">
-                    Items Needed
-                    <button type="button" class="btn btn-sm btn-success">Done</button>
-                </div>
-                <div class="d-flex justify-content-center">
-                    <div>
-                        <div>
-                            <img alt="Item Image" />
+
+                    <div class="d-flex justify-content-center align-items-center gap-4 mb-5">
+                        <div class="text-center">
+                            <div class="text-muted mb-2 small">Current Level</div>
+                            <div class="input-group input-group-sm mb-1">
+                                <button class="btn btn-outline-secondary text-light">&lt;</button>
+                                <span class="input-group-text bg-dark text-light border-secondary px-4">1</span>
+                                <button class="btn btn-outline-secondary text-light">&gt;</button>
+                            </div>
+                            <div class="text-muted fs-5">✦✦✦✦✧</div>
                         </div>
-                        <div class="text-primary">~40</div>
-                        <div class="text-danger">-35</div>
-                    </div>
-                    <div>
-                        <div>
-                            <img alt="Item Image" />
+
+                        <div class="text-muted fs-3 mt-3">&raquo;</div>
+
+                        <div class="text-center">
+                            <div class="text-muted mb-2 small fw-bold">Goal Level</div>
+                            <div class="input-group input-group-sm mb-1">
+                                <button class="btn btn-outline-secondary text-light">&lt;</button>
+                                <span class="input-group-text bg-dark text-light border-secondary px-4">5</span>
+                                <button class="btn btn-outline-secondary text-light">&gt;</button>
+                            </div>
+                            <div class="text-primary fs-5">✦✦✦✦✦</div>
                         </div>
-                        <div class="text-primary">~40</div>
-                        <div class="text-danger">-35</div>
                     </div>
-                    <div>
-                        <div>
-                            <img alt="Item Image" />
+
+                    <div class="mt-4 border-top border-secondary pt-4">
+                        <div class="text-center mb-3 fw-bold">
+                            GOAL COST <span class="badge bg-success ms-2"><i class="bi bi-check-circle me-1"></i> DONE</span>
                         </div>
-                        <div class="text-primary">~40</div>
-                        <div class="text-danger">-35</div>
-                    </div>
-                </div>
-                <div class="rounded bg-primary d-inline p-2">
-                    <img alt="Character Pixels Image" />
-                    200
-                    -
-                    ~2 days
-                    <img alt="Battery" />
-                    5
-                </div>
 
-                <div class="mb-5"></div>
-
-                <div class="bg-secondary text-primary rounded">Arc</div>
-                <div>Filter</div>
-                <ArcFilterSelectForm />
-                <div class="container d-flex flex-wrap gap-2">
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                    <div style="width:120px">
-                        <ArcCardView />
-                    </div>
-                </div>
-                
-                <div class="mb-5"></div>
-
-                <div class="bg-secondary text-primary rounded">Arc</div>
-                <div class="w-100 text-center">
-                    <img alt="Arc" src="img\arcs\arc-blowupthecrowd.png" class="nte-ico-sm"/>
-                    Blow up the Crowd
-                </div>
-                <div class="d-flex justify-content-center">
-                    <div>
-                        <div>Current Level</div>
-                        <div>Level Incrementer</div>
-                        <div>Star Incrementer</div>
-                    </div>
-                    <div>
-                        >>
-                    </div>
-                    <div>
-                        <div>Current Level</div>
-                        <div>Level Incrementer</div>
-                        <div>Star Incrementer</div>
-                    </div>
-                </div>
-                <div class="w-100 text-center">
-                    Items Needed
-                    <button type="button" class="btn btn-sm btn-success">Done</button>
-                </div>
-                <div class="d-flex justify-content-center">
-                    <div>
-                        <div>
-                            <img alt="Item Image" />
+                        <div class="d-flex justify-content-center gap-3 mb-4">
+                            <div class="text-center">
+                                <div class="item-cost-badge mb-1">
+                                    <img src="img/items/credits.png" alt="Credits" style="width: 32px; height: 32px;" />
+                                </div>
+                                <span class="badge bg-danger w-100">406k</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="item-cost-badge mb-1">
+                                    <img src="img/items/exp_book.png" alt="Exp" style="width: 32px; height: 32px;" />
+                                </div>
+                                <span class="badge bg-danger w-100">15</span>
+                            </div>
                         </div>
-                        <div class="text-primary">~40</div>
-                        <div class="text-danger">-35</div>
-                    </div>
-                    <div>
-                        <div>
-                            <img alt="Item Image" />
+
+                        <div class="d-flex justify-content-center gap-3">
+                            <div class="bg-dark px-3 py-2 rounded-pill border border-secondary d-flex align-items-center text-muted small">
+                                <i class="bi bi-battery-half text-primary me-2"></i> 880 • 3 days
+                            </div>
                         </div>
-                        <div class="text-primary">~40</div>
-                        <div class="text-danger">-35</div>
                     </div>
+                }
+
+                @if (activeTab == "ARC" || activeTab == "CONSOLE")
+                {
+                    <div class="text-center text-muted p-5">
+                        @activeTab selection interface to be implemented...
+                    </div>
+                }
+
+                @if (activeTab == "ESPER-ABILITIES")
+                {
+                    <div class="bg-dark p-2 text-center rounded mb-4">
+                        <h4 class="fw-bold text-uppercase">
+                            Esper Abilities
+                        </h4>
+                    </div>
+                    
                     <div>
-                        <div>
-                            <img alt="Item Image" />
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center me-3 border border-secondary" style="width:40px; height:40px;">
+                                <img src="img/skills/basic_atk.png" alt="Basic" style="width:24px;" />
+                            </div>
+                            <div class="input-group input-group-sm me-3" style="width: 100px;">
+                                <button class="btn btn-outline-secondary text-light">&lt;</button>
+                                <span class="input-group-text bg-dark text-light border-secondary">1</span>
+                                <button class="btn btn-outline-secondary text-light">&gt;</button>
+                            </div>
+                            <div class="text-muted me-3">&raquo;</div>
+                            <div class="input-group input-group-sm" style="width: 100px;">
+                                <button class="btn btn-outline-secondary text-light">&lt;</button>
+                                <span class="input-group-text bg-dark text-light border-secondary">5</span>
+                                <button class="btn btn-outline-secondary text-light">&gt;</button>
+                            </div>
                         </div>
-                        <div class="text-primary">~40</div>
-                        <div class="text-danger">-35</div>
-                    </div>
-                </div>
-                <div class="rounded bg-primary d-inline p-2">
-                    <img alt="Character Pixels Image" />
-                    200
-                    -
-                    ~2 days
-                    <img alt="Battery" />
-                    5
-                </div>
 
-                <div class="mb-5"></div>
-
-                <div class="bg-secondary text-primary rounded">Console</div>
-                <div>Filter</div>
-                <div class="d-flex flex-wrap bg-secondary rounded">
-                    <RaritySelectForm />
-                    <input type="text" class="form-control" />
-                </div>
-
-                <div class="container d-flex flex-wrap gap-2">
-                    <div style="width:90px">
-                        <CartridgeCardView />
-                    </div>
-                </div>
-
-                
-                <div>To Be Implemented</div>
-
-                <div class="mb-5"></div>
-
-                <div class="bg-secondary text-primary rounded">Esper Ability</div>
-                <div class="d-flex justify-content-center">
-                    <div>Life Skill</div>
-                    <div>
-                        <div>Level Incrementer</div>
-                    </div>
-                    <div>
-                        >>
-                    </div>
-                    <div>
-                        <div>Level Incrementer</div>
-                    </div>
-                </div>
-                <div class="d-flex justify-content-center">
-                    <div>Basic</div>
-                    <div>
-                        <div>Level Incrementer</div>
-                    </div>
-                    <div>
-                        >>
-                    </div>
-                    <div>
-                        <div>Level Incrementer</div>
-                    </div>
-                </div>
-                <div class="d-flex justify-content-center">
-                    <div>Skill</div>
-                    <div>
-                        <div>Level Incrementer</div>
-                    </div>
-                    <div>
-                        >>
-                    </div>
-                    <div>
-                        <div>Level Incrementer</div>
-                    </div>
-                </div>
-                <div class="d-flex justify-content-center">
-                    <div>Ultimate</div>
-                    <div>
-                        <div>Level Incrementer</div>
-                    </div>
-                    <div>
-                        >>
-                    </div>
-                    <div>
-                        <div>Level Incrementer</div>
-                    </div>
-                </div>
-                <div class="d-flex justify-content-center">
-                    <div>Support Skill</div>
-                    <div>
-                        <div>Level Incrementer</div>
-                    </div>
-                    <div>
-                        >>
-                    </div>
-                    <div>
-                        <div>Level Incrementer</div>
-                    </div>
-                </div>
-                <div class="w-100 text-center">
-                    Items Needed
-                    <button type="button" class="btn btn-sm btn-success">Done</button>
-                </div>
-                <div class="d-flex justify-content-center">
-                    <div>
-                        <div>
-                            <img alt="Item Image" />
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center me-3 border border-secondary" style="width:40px; height:40px;">
+                                <img src="img/skills/basic_atk.png" alt="Skill" style="width:24px;" />
+                            </div>
+                            <div class="input-group input-group-sm me-3" style="width: 100px;">
+                                <button class="btn btn-outline-secondary text-light">&lt;</button>
+                                <span class="input-group-text bg-dark text-light border-secondary">1</span>
+                                <button class="btn btn-outline-secondary text-light">&gt;</button>
+                            </div>
+                            <div class="text-muted me-3">&raquo;</div>
+                            <div class="input-group input-group-sm" style="width: 100px;">
+                                <button class="btn btn-outline-secondary text-light">&lt;</button>
+                                <span class="input-group-text bg-dark text-light border-secondary">5</span>
+                                <button class="btn btn-outline-secondary text-light">&gt;</button>
+                            </div>
                         </div>
-                        <div class="text-primary">~40</div>
-                        <div class="text-danger">-35</div>
-                    </div>
-                    <div>
-                        <div>
-                            <img alt="Item Image" />
+
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center me-3 border border-secondary" style="width:40px; height:40px;">
+                                <img src="img/skills/basic_atk.png" alt="Ultimate" style="width:24px;" />
+                            </div>
+                            <div class="input-group input-group-sm me-3" style="width: 100px;">
+                                <button class="btn btn-outline-secondary text-light">&lt;</button>
+                                <span class="input-group-text bg-dark text-light border-secondary">1</span>
+                                <button class="btn btn-outline-secondary text-light">&gt;</button>
+                            </div>
+                            <div class="text-muted me-3">&raquo;</div>
+                            <div class="input-group input-group-sm" style="width: 100px;">
+                                <button class="btn btn-outline-secondary text-light">&lt;</button>
+                                <span class="input-group-text bg-dark text-light border-secondary">5</span>
+                                <button class="btn btn-outline-secondary text-light">&gt;</button>
+                            </div>
                         </div>
-                        <div class="text-primary">~40</div>
-                        <div class="text-danger">-35</div>
-                    </div>
-                    <div>
-                        <div>
-                            <img alt="Item Image" />
+
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center me-3 border border-secondary" style="width:40px; height:40px;">
+                                <img src="img/skills/basic_atk.png" alt="Life Skills" style="width:24px;" />
+                            </div>
+                            <div class="input-group input-group-sm me-3" style="width: 100px;">
+                                <button class="btn btn-outline-secondary text-light">&lt;</button>
+                                <span class="input-group-text bg-dark text-light border-secondary">1</span>
+                                <button class="btn btn-outline-secondary text-light">&gt;</button>
+                            </div>
+                            <div class="text-muted me-3">&raquo;</div>
+                            <div class="input-group input-group-sm" style="width: 100px;">
+                                <button class="btn btn-outline-secondary text-light">&lt;</button>
+                                <span class="input-group-text bg-dark text-light border-secondary">5</span>
+                                <button class="btn btn-outline-secondary text-light">&gt;</button>
+                            </div>
                         </div>
-                        <div class="text-primary">~40</div>
-                        <div class="text-danger">-35</div>
                     </div>
-                </div>
-                <div class="rounded bg-primary d-inline p-2">
-                    <img alt="Character Pixels Image" />
-                    200
-                    -
-                    ~2 days
-                    <img alt="Battery" />
-                    5
+                    <div class="text-center text-danger mt-3 bg-dark p-2 rounded">
+                        You don't have the needed Esper level.
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer flex-column align-items-center">
+                <div class="text-center mb-3 fw-bold text-capitalize">
+                    Total Cost <span class="badge bg-success ms-2">Done</span>
                 </div>
 
+                <div class="d-flex justify-content-center gap-3 mb-4">
+                    <div class="text-center">
+                        <div class="item-cost-badge mb-1">
+                            <img src="img/items/credits.png" alt="Credits" style="width: 32px; height: 32px;" />
+                        </div>
+                        <span class="badge bg-danger w-100">406k</span>
+                    </div>
+                    <div class="text-center">
+                        <div class="item-cost-badge mb-1">
+                            <img src="img/items/exp_book.png" alt="Exp" style="width: 32px; height: 32px;" />
+                        </div>
+                        <span class="badge bg-danger w-100">15</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-center gap-3">
+                    <div class="bg-dark px-3 py-2 rounded-pill border border-secondary d-flex align-items-center text-muted small">
+                        <i class="bi bi-battery-half text-primary me-2"></i> 880 • 3 days
+                    </div>
+                    <div class="bg-dark px-3 py-2 rounded-pill border border-secondary d-flex align-items-center text-muted small">
+                        <span class="text-primary fw-bold me-2">TOTAL</span>
+                        <i class="bi bi-battery-full text-primary me-2"></i> 2k • 7 days
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 @code {
-    /// <summary>
-    /// Opens the modal and loads default data if provided.
-    /// </summary>
+    private string activeTab = "LEVEL";
+
     public async Task OpenModal()
     {
-        // Open the boostrap modal
         await JS.InvokeVoidAsync("bootstrapInterop.showModal", "#espers-manage-modal");
     }
 
-    /// <summary>
-    /// Closes the modal.
-    /// </summary>
     public async Task CloseModal()
     {
         await JS.InvokeVoidAsync("bootstrapInterop.hideModal", "#espers-manage-modal");
+    }
+
+    private void SetTab(string tabName)
+    {
+        activeTab = tabName;
     }
 }

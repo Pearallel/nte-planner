@@ -1,28 +1,70 @@
-﻿@page "/espers"
+﻿@page "/"
+@inject nte_planner.Services.EsperDataService EsperService
 @using nte_planner.Components.Forms
 @using nte_planner.Components.Modals
 @using nte_planner.Components.Views
+@using nte_planner.Models
 
 <h3>Espers</h3>
 <p>Temporarily using images by https://zeroluck.gg/nte/ and https://game8.co/games/Neverness-to-Everness for development!</p>
 <div>
     <button type="button" class="btn btn-primary" @onclick="() => espersManageModal.OpenModal()">Add</button>
 </div>
-<div>
-    <p>Filter</p>
+<div class="text-uppercase fw-bold text-muted">
+    Filter
 </div>
 <EsperFilterSelectForm />
 
-<div class="bg-secondary nte-esper-card-container p-2 rounded user-select-none" @onclick="() => espersManageModal.OpenModal()">
-    <EsperCardView />
-    <div>Mint</div>
-    <div>
-        <img alt="Level" src="img/level.webp" class="nte-ico-sm" />
-        <img alt="Arc" src="img/level.webp" class="nte-ico-sm" />
-        <img alt="Console" src="img/level.webp" class="nte-ico-sm" />
+@foreach (var owned in userEspers)
+{
+    @* <div class="esper-card">
+        <h4>@owned.Esper?.Name</h4>
+        <p>Level: @owned.CurrentLevel</p>
+        <p>Element: @owned.Esper?.Element?.Name</p>
+        <p>Role: @owned.Esper?.CombatRole?.Name</p>
+                
+        @if (!string.IsNullOrEmpty(owned.Esper?.Rarity?.ImageLink))
+        {
+            <img src="@owned.Esper.Rarity.ImageLink" alt="@owned.Esper.Rarity.Name" />
+        }
+    </div> *@
+
+    <div class="nte-esper-card" @onclick="() => espersManageModal.OpenModal()">
+        <EsperCardView Esper="owned" />
+        <div class="text-uppercase text-center p-2" style="background-color: #2a2e42;">
+            <strong>@owned.Esper?.Name</strong>
+        </div>
+        <div>
+            <img alt="Level" src="img/level.webp" class="nte-ico-sm" />
+            <img alt="Arc" src="img/level.webp" class="nte-ico-sm" />
+            <img alt="Console" src="img/level.webp" class="nte-ico-sm" />
+        </div>
     </div>
-</div>
+}
+
+
 <EspersManageModal @ref="espersManageModal" />
-@code{
-    EspersManageModal espersManageModal;
+
+@code {
+    private EspersManageModal espersManageModal = default!;
+
+    private void OpenAddModal()
+    {
+        espersManageModal.OpenModal();
+    }
+
+    private void OpenManageModal()
+    {
+        espersManageModal.OpenModal();
+    }
+
+    private List<OwnedEsper>? userEspers;
+    private string currentUserId = "user-123"; // You would get this from your Auth state
+
+    protected override async Task OnInitializedAsync()
+    {
+        // One single call gets us everything we need.
+        userEspers = await EsperService.GetUserEspersAsync(currentUserId);
+    }
+
 }
